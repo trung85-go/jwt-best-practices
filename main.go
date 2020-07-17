@@ -36,8 +36,8 @@ func init() {
 
 func main() {
 	router.POST("/login", Login)
-	router.POST("/todo", CreateTodo)
-	router.POST("/logout", Logout)
+	router.POST("/todo", TokenAuthMiddleware(), CreateTodo)
+	router.POST("/logout", TokenAuthMiddleware(), Logout)
 	router.POST("/refresh", Refresh)
 	log.Fatal(router.Run(":8082"))
 }
@@ -53,6 +53,17 @@ var user = User{
 	Password: "password",
 }
 
+func TokenAuthMiddleware() gin.HandlerFunc {
+  return func(c *gin.Context) {
+     err := TokenValid(c.Request)
+     if err != nil {
+        c.JSON(http.StatusUnauthorized, err.Error())
+        c.Abort()
+        return
+     }
+     c.Next()
+  }
+}
 
 func Login(c *gin.Context) {
 	var u User
